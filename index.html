@@ -15,7 +15,7 @@
             --accent-glow: rgba(255, 102, 0, 0.4);
             --text-main: #f0f0f0;
             --text-muted: #888888;
-            --canvas-bg: #1e1e1e;
+            --canvas-bg: #181818;
         }
 
         [data-theme="dark-neon"] {
@@ -46,7 +46,7 @@
             --accent-glow: rgba(217, 119, 6, 0.4);
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --canvas-bg: #e2e8f0;
+            --canvas-bg: #cbd5e1;
         }
 
         * {
@@ -70,7 +70,7 @@
         #setup-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.88);
             z-index: 9999;
             display: flex;
             justify-content: center;
@@ -82,13 +82,14 @@
             padding: 30px;
             border-radius: 12px;
             width: 450px;
-            box-shadow: 0 0 30px var(--accent-glow);
+            box-shadow: 0 0 35px var(--accent-glow);
         }
         .modal-content h2 {
             color: var(--accent);
             margin-bottom: 20px;
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
         }
         .form-group {
             margin-bottom: 15px;
@@ -96,7 +97,7 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
         }
         .form-group input, .form-group select {
@@ -137,6 +138,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
+            z-index: 10;
         }
         .brand {
             display: flex;
@@ -182,19 +184,20 @@
 
         /* Sidebar Herramientas */
         sidebar {
-            width: 300px;
+            width: 290px;
             background: var(--panel-bg);
             border-right: 1px solid var(--panel-border);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            z-index: 5;
         }
         .section-box {
             padding: 15px;
             border-bottom: 1px solid var(--panel-border);
         }
         .section-box h3 {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--accent);
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -223,7 +226,7 @@
             font-weight: 600;
         }
 
-        /* Lienzo Infinito / Área de trabajo */
+        /* Visor y Lienzo */
         .canvas-viewport {
             flex: 1;
             background: var(--canvas-bg);
@@ -232,11 +235,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 60px;
         }
         #artboard {
             position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: background-color 0.3s;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            border: 2px solid rgba(255,102,0,0.3);
+            transition: background-color 0.3s, border-color 0.3s;
         }
         .canvas-element {
             position: absolute;
@@ -248,11 +253,12 @@
         }
         .resize-handle {
             position: absolute;
-            width: 10px; height: 10px;
+            width: 12px; height: 12px;
             background: var(--accent);
-            bottom: -5px; right: -5px;
+            bottom: -6px; right: -6px;
             cursor: se-resize;
             display: none;
+            border-radius: 50%;
         }
         .canvas-element.selected .resize-handle {
             display: block;
@@ -260,11 +266,12 @@
 
         /* Panel Derecho: Capas e Info */
         .right-panel {
-            width: 260px;
+            width: 250px;
             background: var(--panel-bg);
             border-left: 1px solid var(--panel-border);
             display: flex;
             flex-direction: column;
+            z-index: 5;
         }
         .layers-list {
             flex: 1;
@@ -285,7 +292,7 @@
         }
         .layer-item.active {
             border-color: var(--accent);
-            background: rgba(255,102,0,0.05);
+            background: rgba(255,102,0,0.08);
         }
 
         /* Barra de Estado Inferior */
@@ -299,6 +306,7 @@
             padding: 0 15px;
             font-size: 0.75rem;
             color: var(--text-muted);
+            z-index: 10;
         }
     </style>
 </head>
@@ -318,11 +326,11 @@
             </div>
             <div class="form-group">
                 <label>Ancho del Lienzo:</label>
-                <input type="number" id="init-width" value="50" min="1" max="500">
+                <input type="number" id="init-width" value="40" min="1" max="500">
             </div>
             <div class="form-group">
                 <label>Alto del Lienzo:</label>
-                <input type="number" id="init-height" value="70" min="1" max="500">
+                <input type="number" id="init-height" value="50" min="1" max="500">
             </div>
             <div class="form-group">
                 <label>Resolución (DPI):</label>
@@ -370,7 +378,7 @@
                 <div class="btn-grid">
                     <button class="action-btn" onclick="removeBackground()">Quitar Fondo</button>
                     <button class="action-btn" onclick="openCropTool()">Recortar Imagen</button>
-                    <button class="action-btn" onclick="applyVectorize()">Vectorizar (Vector)</button>
+                    <button class="action-btn" onclick="applyVectorize()">Convertir a Vector</button>
                     <button class="action-btn" onclick="applyPixelate()">Convertir a Píxeles</button>
                     <button class="action-btn" onclick="applyHalftones()">Semitonos Prof.</button>
                     <button class="action-btn" onclick="applyUpscaler()">Upscaler IA</button>
@@ -399,7 +407,7 @@
                     <label>Nuevo Color o Transparente:</label>
                     <div style="display:flex; gap:5px;">
                         <input type="color" id="new-color" value="#ff6600" style="height:35px; padding:2px; flex:1;">
-                        <button class="action-btn" onclick="applyColorReplace(true)" style="flex:1;">Hacer Transparente</button>
+                        <button class="action-btn" onclick="applyColorReplace(true)" style="flex:1;">Transparente</button>
                     </div>
                 </div>
                 <button class="action-btn" onclick="applyColorReplace(false)" style="width:100%;">Reemplazar Color</button>
@@ -407,7 +415,7 @@
 
             <div class="section-box">
                 <h3>Apoyo & Donaciones</h3>
-                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Apoya el proyecto vía PayPal a:</p>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Apoya vía PayPal:</p>
                 <a href="mailto:arnaldojbg@gmail.com" style="color:var(--accent); font-size:0.85rem; word-break:break-all;">arnaldojbg@gmail.com</a>
             </div>
         </sidebar>
@@ -422,9 +430,7 @@
             <div class="section-box" style="padding:10px; border-bottom:1px solid var(--panel-border);">
                 <h3 style="margin-bottom:5px;">Capas Inteligentes</h3>
             </div>
-            <div class="layers-list" id="layers-list">
-                <!-- Se poblará dinámicamente -->
-            </div>
+            <div class="layers-list" id="layers-list"></div>
         </div>
     </div>
 
@@ -435,7 +441,7 @@
     </footer>
 
     <script>
-        let artboardConfig = { width: 800, height: 1120, unit: 'cm', dpi: 300, bgColor: '#ffffff' };
+        let artboardConfig = { width: 600, height: 800, unit: 'cm', dpi: 300, bgColor: '#ffffff' };
         let elements = [];
         let selectedElementId = null;
         let undoStack = [];
@@ -456,14 +462,14 @@
 
         function initArtboard() {
             let u = document.getElementById('init-unit').value;
-            let w = parseFloat(document.getElementById('init-width').value) || 50;
-            let h = parseFloat(document.getElementById('init-height').value) || 70;
+            let w = parseFloat(document.getElementById('init-width').value) || 40;
+            let h = parseFloat(document.getElementById('init-height').value) || 50;
             let dpi = parseInt(document.getElementById('init-dpi').value) || 300;
             let bg = document.getElementById('init-bg-color').value;
 
-            // Convertir dimensiones aproximadas a pixeles de pantalla para trabajo fluido
-            let pxWidth = u === 'cm' ? w * 37.8 : (u === 'mm' ? w * 3.78 : w);
-            let pxHeight = u === 'cm' ? h * 37.8 : (u === 'mm' ? h * 3.78 : h);
+            // Escala de trabajo cómoda en pantalla
+            let pxWidth = u === 'cm' ? w * 25 : (u === 'mm' ? w * 2.5 : w);
+            let pxHeight = u === 'cm' ? h * 25 : (u === 'mm' ? h * 2.5 : h);
 
             artboardConfig = { width: pxWidth, height: pxHeight, unit: u, dpi: dpi, bgColor: bg };
             
@@ -514,17 +520,24 @@
                 let imgObj = new Image();
                 imgObj.src = e.target.result;
                 imgObj.onload = function() {
+                    // Calcular tamaño inicial proporcionado y centrado garantizado en la mesa de trabajo
+                    let targetW = Math.min(imgObj.width, artboardConfig.width * 0.6);
+                    let targetH = targetW * (imgObj.height / imgObj.width);
+                    let centerX = (artboardConfig.width - targetW) / 2;
+                    let centerY = (artboardConfig.height - targetH) / 2;
+
                     let newEl = {
                         id: 'el_' + Date.now(),
                         name: file.name,
                         type: 'image',
                         src: e.target.result,
-                        x: 50,
-                        y: 50,
-                        width: Math.min(imgObj.width, 300),
-                        height: Math.min(imgObj.height, 300 * (imgObj.height / imgObj.width))
+                        x: Math.max(10, centerX),
+                        y: Math.max(10, centerY),
+                        width: targetW,
+                        height: targetH
                     };
                     elements.push(newEl);
+                    selectElement(newEl.id);
                     saveState();
                     renderCanvas();
                 }
@@ -539,7 +552,6 @@
             layersList.innerHTML = '';
 
             elements.forEach((el, index) => {
-                // Render elemento en lienzo / área de trabajo (permite salirse)
                 let div = document.createElement('div');
                 div.className = 'canvas-element ' + (el.id === selectedElementId ? 'selected' : '');
                 div.style.left = el.x + 'px';
@@ -559,21 +571,22 @@
                 handle.className = 'resize-handle';
                 div.appendChild(handle);
 
-                // Eventos de selección y arrastre libre (dentro y fuera del lienzo)
+                // Movimiento libre (dentro y fuera del lienzo)
                 div.onmousedown = function(e) {
                     selectElement(el.id);
                     let startX = e.clientX;
                     let startY = e.clientY;
                     let initialX = el.x;
                     let initialY = el.y;
-
+                    let initialWidth = el.width;
+                    let initialHeight = el.height;
+                    let aspect = initialHeight / initialWidth;
                     let isResizing = e.target === handle;
 
                     function onMouseMove(moveEvent) {
                         let dx = moveEvent.clientX - startX;
                         let dy = moveEvent.clientY - startY;
                         if (isResizing) {
-                            el.width = Math.max(30, initialX + el.width - el.x + dx - (el.x - initialX)); // simplificado
                             el.width = Math.max(30, initialWidth + dx);
                             el.height = el.width * aspect;
                         } else {
@@ -586,9 +599,6 @@
                         div.style.height = el.height + 'px';
                         updateMetrics(el);
                     }
-
-                    let initialWidth = el.width;
-                    let aspect = el.height / el.width;
 
                     function onMouseUp() {
                         window.removeEventListener('mousemove', onMouseMove);
@@ -603,7 +613,7 @@
 
                 artboard.appendChild(div);
 
-                // Render en panel de capas
+                // Capas
                 let layerItem = document.createElement('div');
                 layerItem.className = 'layer-item ' + (el.id === selectedElementId ? 'active' : '');
                 layerItem.innerHTML = `<span>${el.name}</span> <small>Capa ${index+1}</small>`;
@@ -623,7 +633,7 @@
             document.getElementById('element-metrics').innerText = `Medidas: ${Math.round(el.width)}px x ${Math.round(el.height)}px | Posición: X(${Math.round(el.x)}), Y(${Math.round(el.y)})`;
         }
 
-        // --- FUNCIONES DE PROCESAMIENTO DE IMAGEN ---
+        // --- PROCESAMIENTO DE IMAGEN ---
         function getSelectedObject() {
             return elements.find(item => item.id === selectedElementId);
         }
@@ -653,11 +663,9 @@
             processImageCanvas((canvas, ctx) => {
                 let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 let data = imgData.data;
-                // Umbral inteligente para blancos/fondos claros
                 for (let i = 0; i < data.length; i += 4) {
-                    let r = data[i], g = data[i+1], b = data[i+2];
-                    if (r > 230 && g > 230 && b > 230) {
-                        data[i+3] = 0; // Transparente
+                    if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) {
+                        data[i+3] = 0;
                     }
                 }
                 ctx.putImageData(imgData, 0, 0);
@@ -678,141 +686,3 @@
                         let idx = (y * canvas.width + x) * 4;
                         let avg = (data[idx] + data[idx+1] + data[idx+2]) / 3;
                         let radius = (1 - avg / 255) * (step / 1.2);
-                        if (radius > 0.5) {
-                            ctx.beginPath();
-                            ctx.arc(x + step/2, y + step/2, radius, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                    }
-                }
-            });
-        }
-
-        function applyChoke(pixels) {
-            processImageCanvas((canvas, ctx, el) => {
-                // Simulación profesional de choke / reducción de semitransparencias
-                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                let data = imgData.data;
-                for (let i = 3; i < data.length; i += 4) {
-                    if (data[i] < 255 && data[i] > 0) {
-                        data[i] = Math.max(0, data[i] - (pixels * 25));
-                    }
-                }
-                ctx.putImageData(imgData, 0, 0);
-            });
-        }
-
-        function applyColorReplace(toTransparent) {
-            let targetHex = document.getElementById('target-color').value;
-            let newHex = document.getElementById('new-color').value;
-            let tr = parseInt(targetHex.substr(1,2), 16);
-            let tg = parseInt(targetHex.substr(3,2), 16);
-            let tb = parseInt(targetHex.substr(5,2), 16);
-
-            let nr = toTransparent ? 0 : parseInt(newHex.substr(1,2), 16);
-            let ng = toTransparent ? 0 : parseInt(newHex.substr(3,2), 16);
-            let nb = toTransparent ? 0 : parseInt(newHex.substr(5,2), 16);
-
-            processImageCanvas((canvas, ctx) => {
-                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                let data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    let r = data[i], g = data[i+1], b = data[i+2];
-                    if (Math.abs(r - tr) < 40 && Math.abs(g - tg) < 40 && Math.abs(b - tb) < 40) {
-                        data[i] = nr;
-                        data[i+1] = ng;
-                        data[i+2] = nb;
-                        if (toTransparent) data[i+3] = 0;
-                    }
-                }
-                ctx.putImageData(imgData, 0, 0);
-            });
-        }
-
-        function applyVectorize() {
-            processImageCanvas((canvas, ctx) => {
-                // Conversión a vector binarizado de alto contraste
-                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                let data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    let avg = (data[i] + data[i+1] + data[i+2]) / 3;
-                    let val = avg > 128 ? 255 : 0;
-                    data[i] = val; data[i+1] = val; data[i+2] = val;
-                }
-                ctx.putImageData(imgData, 0, 0);
-            });
-        }
-
-        function applyPixelate() {
-            processImageCanvas((canvas, ctx) => {
-                let size = 10;
-                let w = canvas.width, h = canvas.height;
-                let tempCanvas = document.createElement('canvas');
-                tempCanvas.width = w / size;
-                tempCanvas.height = h / size;
-                let tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, w, h);
-            });
-        }
-
-        function applyUpscaler() {
-            processImageCanvas((canvas, ctx, el) => {
-                // Upscaler IA simulado por interpolación de alta definición con nitidez
-                let tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width * 2;
-                tempCanvas.height = canvas.height * 2;
-                let tempCtx = tempCanvas.getContext('2d');
-                tempCtx.imageSmoothingEnabled = true;
-                tempCtx.imageSmoothingQuality = 'high';
-                tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-                canvas.width = tempCanvas.width;
-                canvas.height = tempCanvas.height;
-                ctx.drawImage(tempCanvas, 0, 0);
-                el.width *= 1.5;
-                el.height *= 1.5;
-            });
-        }
-
-        function openCropTool() {
-            alert('Herramienta de recorte activa: Selecciona los bordes en la imagen para reajustar.');
-        }
-
-        // --- EXPORTACIÓN RESTRINGIDA AL LIENZO ---
-        function exportDocument(format) {
-            let artboard = document.getElementById('artboard');
-            let exportCanvas = document.createElement('canvas');
-            exportCanvas.width = artboard.clientWidth;
-            exportCanvas.height = artboard.clientHeight;
-            let ctx = exportCanvas.getContext('2d');
-
-            // Dibujar fondo del lienzo
-            if (artboardConfig.bgColor !== 'transparent') {
-                ctx.fillStyle = artboardConfig.bgColor;
-                ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-            }
-
-            // Filtrar y renderizar SOLO los elementos que intersectan con el lienzo (ignorando los fuera de él)
-            let promises = elements.map(el => {
-                return new Promise((resolve) => {
-                    let img = new Image();
-                    img.src = el.src;
-                    img.onload = function() {
-                        // Coordenada relativa al artboard
-                        ctx.drawImage(img, el.x, el.y, el.width, el.height);
-                        resolve();
-                    }
-                });
-            });
-
-            Promise.all(promises).then(() => {
-                let link = document.createElement('a');
-                link.download = 'naldo-grafic-design-2026.' + format;
-                link.href = exportCanvas.toDataURL('image/' + (format === 'jpg' ? 'jpeg' : 'png'));
-                link.click();
-            });
-        }
-    </script>
-</body>
-</html>
