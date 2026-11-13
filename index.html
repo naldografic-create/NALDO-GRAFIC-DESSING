@@ -70,8 +70,8 @@
         #setup-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.88);
-            z-index: 9999;
+            background: rgba(0,0,0,0.9);
+            z-index: 99999;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -235,13 +235,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 60px;
+            padding: 80px;
         }
         #artboard {
             position: relative;
             box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            border: 2px solid rgba(255,102,0,0.3);
+            border: 2px solid rgba(255,102,0,0.4);
             transition: background-color 0.3s, border-color 0.3s;
+            background-color: #ffffff;
         }
         .canvas-element {
             position: absolute;
@@ -349,7 +350,7 @@
                     <option value="#808080">Gris Neutro</option>
                 </select>
             </div>
-            <button class="btn-primary" onclick="initArtboard()">CREAR LIENZO DE TRABAJO</button>
+            <button class="btn-primary" type="button" onclick="initArtboard()">CREAR LIENZO DE TRABAJO</button>
         </div>
     </div>
 
@@ -467,7 +468,6 @@
             let dpi = parseInt(document.getElementById('init-dpi').value) || 300;
             let bg = document.getElementById('init-bg-color').value;
 
-            // Escala de trabajo cómoda en pantalla
             let pxWidth = u === 'cm' ? w * 25 : (u === 'mm' ? w * 2.5 : w);
             let pxHeight = u === 'cm' ? h * 25 : (u === 'mm' ? h * 2.5 : h);
 
@@ -478,8 +478,15 @@
             artboard.style.height = pxHeight + 'px';
             artboard.style.backgroundColor = bg === 'transparent' ? '#ffffff' : bg;
             
-            document.getElementById('setup-modal').style.display = 'none';
+            // Ocultar modal de forma directa y absoluta
+            let modal = document.getElementById('setup-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.remove();
+            }
+
             saveState();
+            renderCanvas();
         }
 
         function saveState() {
@@ -520,7 +527,6 @@
                 let imgObj = new Image();
                 imgObj.src = e.target.result;
                 imgObj.onload = function() {
-                    // Calcular tamaño inicial proporcionado y centrado garantizado en la mesa de trabajo
                     let targetW = Math.min(imgObj.width, artboardConfig.width * 0.6);
                     let targetH = targetW * (imgObj.height / imgObj.width);
                     let centerX = (artboardConfig.width - targetW) / 2;
@@ -571,7 +577,6 @@
                 handle.className = 'resize-handle';
                 div.appendChild(handle);
 
-                // Movimiento libre (dentro y fuera del lienzo)
                 div.onmousedown = function(e) {
                     selectElement(el.id);
                     let startX = e.clientX;
@@ -613,7 +618,6 @@
 
                 artboard.appendChild(div);
 
-                // Capas
                 let layerItem = document.createElement('div');
                 layerItem.className = 'layer-item ' + (el.id === selectedElementId ? 'active' : '');
                 layerItem.innerHTML = `<span>${el.name}</span> <small>Capa ${index+1}</small>`;
@@ -633,7 +637,6 @@
             document.getElementById('element-metrics').innerText = `Medidas: ${Math.round(el.width)}px x ${Math.round(el.height)}px | Posición: X(${Math.round(el.x)}), Y(${Math.round(el.y)})`;
         }
 
-        // --- PROCESAMIENTO DE IMAGEN ---
         function getSelectedObject() {
             return elements.find(item => item.id === selectedElementId);
         }
@@ -686,3 +689,97 @@
                         let idx = (y * canvas.width + x) * 4;
                         let avg = (data[idx] + data[idx+1] + data[idx+2]) / 3;
                         let radius = (1 - avg / 255) * (step / 1.2);
+                        if (radius > 0.4) {
+                            ctx.beginPath();
+                            ctx.arc(x + step/2, y + step/2, radius, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyChoke(pixels) {
+            processImageCanvas((canvas, ctx) => {
+                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imgData.data;
+                for (let i = 3; i < data.length; i += 4) {
+                    if (data[i] < 255 && data[i] > 0) {
+                        data[i] = Math.max(0, data[i] - (pixels * 25));
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            });
+        }
+
+        function applyColorReplace(toTransparent) {
+            let targetHex = document.getElementById('target-color').value;
+            let newHex = document.getElementById('new-color').value;
+            let tr = parseInt(targetHex.substr(1,2), 16);
+            let tg = parseInt(targetHex.substr(3,2), 16);
+            let tb = parseInt(targetHex.substr(5,2), 16);
+
+            let nr = toTransparent ? 0 : parseInt(newHex.substr(1,2), 16);
+            let ng = toTransparent ? 0 : parseInt(newHex.substr(3,2), 16);
+            let nb = toTransparent ? 0 : parseInt(newHex.substr(5,2), 16);
+
+            processImageCanvas((canvas, ctx) => {
+                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i], g = data[i+1], b = data[i+2];
+                    if (Math.abs(r - tr) < 45 && Math.abs(g - tg) < 45 && Math.abs(b - tb) < 45) {
+                        data[i] = nr; data[i+1] = ng; data[i+2] = nb;
+                        if (toTransparent) data[i+3] = 0;
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            });
+        }
+
+        function applyVectorize() {
+            processImageCanvas((canvas, ctx) => {
+                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    let avg = (data[i] + data[i+1] + data[i+2]) / 3;
+                    let val = avg > 130 ? 255 : 0;
+                    data[i] = val; data[i+1] = val; data[i+2] = val;
+                }
+                ctx.putImageData(imgData, 0, 0);
+            });
+        }
+
+        function applyPixelate() {
+            processImageCanvas((canvas, ctx) => {
+                let size = 10;
+                let w = canvas.width, h = canvas.height;
+                let tempCanvas = document.createElement('canvas');
+                tempCanvas.width = w / size;
+                tempCanvas.height = h / size;
+                let tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, w, h);
+            });
+        }
+
+        function applyUpscaler() {
+            processImageCanvas((canvas, ctx, el) => {
+                let tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width * 2;
+                tempCanvas.height = canvas.height * 2;
+                let tempCtx = tempCanvas.getContext('2d');
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+                tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                canvas.width = tempCanvas.width;
+                canvas.height = tempCanvas.height;
+                ctx.drawImage(tempCanvas, 0, 0);
+                el.width *= 1.5;
+                el.height *= 1.5;
+            });
+        }
+
+        function openCropTool() {
+            alert('Herramienta de recorte activa: Ajusta los bordes de la selección.');
